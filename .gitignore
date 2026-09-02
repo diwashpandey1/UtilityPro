@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+
+# Production build output
+dist/
+dist-ssr/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local Firebase / deployment artifacts
+.firebase/
+.firebase-*
+firebase-debug.log*
+
+# Editor and IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and debug files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local development artifacts
+tmp/
+temp/
+*.tmp
+*.temp
+*.local
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.cer
+serviceAccount*.json
+
+# Misc
+.cache/
+coverage/
+.nyc_output/
