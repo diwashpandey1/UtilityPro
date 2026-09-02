@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "../components/header";
+import Header from "../components/Header";
 import Footer from "../components/Footer";
 import my_profile from "../assets/images/my_pp.jpg";
 import logo from "../assets/images/logo.png"
@@ -10,10 +10,10 @@ function About() {
       <Header />
 
       <div className="pt-24 pb-16 px-6 md:px-12 lg:px-24 max-w-5xl mx-auto text-gray-800 leading-relaxed">
-        
+
         {/* Section Title */}
         <h2 className="text-4xl font-bold justify-center items-center gap-5 mb-10 flex">
-          <img src={logo} alt="" className="w-20 h-20"/>
+          <img src={logo} alt="" className="w-20 h-20" />
           <span>About Utility<span className="text-blue-400">Pro</span></span>
         </h2>
 
@@ -53,8 +53,8 @@ function About() {
 
           <p>
             Whether you’re here out of curiosity, to test a tool, or you landed here
-            accidentally   <span className="font-semibold text-green-600">thank you</span>. 
-            Every visit, click, and feedback motivates me to keep improving and expanding 
+            accidentally   <span className="font-semibold text-green-600">thank you</span>.
+            Every visit, click, and feedback motivates me to keep improving and expanding
             UtilityPro step by step.
           </p>
 
@@ -67,20 +67,20 @@ function About() {
 
         {/* About Me Section */}
         <div className="mt-16 flex flex-col md:flex-row items-center gap-10 bg-gray-50 p-8 rounded-xl shadow-sm">
-          
+
           <div className="w-70 aspect-square rounded-full object-cover border-4 border-blue-500 shadow-md overflow-hidden">
-            <img 
-            src={my_profile}
-            alt="My Profile"
-            className=""
-          />
+            <img
+              src={my_profile}
+              alt="My Profile"
+              className=""
+            />
           </div>
-          
+
 
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">About Me 👋</h3>
             <p className="text-lg text-gray-700">
-              Hi, I’m <span className="font-semibold">Diwash Pandey</span>, a BCA student 
+              Hi, I’m <span className="font-semibold">Diwash Pandey</span>, a BCA student
               and passionate learner exploring the world of{" "}
               <span className="text-blue-600 font-semibold">
                 Full-Stack Web Development & AI/ML.

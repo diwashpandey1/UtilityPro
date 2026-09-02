@@ -15,6 +15,13 @@ dist-ssr/
 .firebase-*
 firebase-debug.log*
 
+# Cloudflare Worker local secrets
+worker/.dev.vars
+worker/.dev.vars.*
+worker/*.secret
+worker/*.secret.*
+secrets/
+
 # Editor and IDE settings
 .vscode/
 .idea/

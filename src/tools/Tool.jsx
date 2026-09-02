@@ -1,9 +1,9 @@
-import React, {Suspense} from "react";
-import Header from "../components/header";
+import React, { Suspense } from "react";
+import Header from "../components/Header";
 import Footer from "../components/Footer";
-import {Routes, Route} from "react-router-dom";
-import {ArrowLeft} from "lucide-react";
-import {Link} from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import ImageCompressor from "./ImageCompressor"
 import PasswordGenerator from "./PasswordGenerator"
 import ColorPicker from "./ColorPicker"

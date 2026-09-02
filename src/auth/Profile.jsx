@@ -1,4 +1,4 @@
-import React, {useContext, useState, useRef, useEffect} from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import {
    User,
    Mail,
@@ -12,20 +12,20 @@ import {
    ShieldCheck,
    Home,
 } from "lucide-react";
-import {Link, useNavigate} from "react-router-dom";
-import {AuthContext} from "../context/AuthContext";
-import Popup from "../helper/PopUp";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import Popup from "../helper/Popup";
 import ConfirmLogin from "../helper/ConfirmLogin";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
-// Supabase & Firebase
-import supabase from "../backend/Supabase";
-import {fireDb} from "../backend/Firebase";
-import {doc, setDoc, getDoc} from "firebase/firestore";
-import {updateProfile as updateAuthProfile} from "firebase/auth";
+// Firebase & ImageKit
+import { fireDb } from "../backend/Firebase";
+import { deleteImageKitFile, uploadProfilePictureToImageKit } from "../backend/ImageKit";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { updateProfile as updateAuthProfile } from "firebase/auth";
 
 const Profile = () => {
-   const {user, logout, deleteAccount} = useContext(AuthContext);
+   const { user, logout, deleteAccount } = useContext(AuthContext);
    const navigate = useNavigate();
 
    // 🔹 Firestore profile data
@@ -87,10 +87,11 @@ const Profile = () => {
                   phoneNumber: data.phoneNumber || "",
                });
 
-               if (data.photoURL) {
-                  setPhotoURL(data.photoURL);
-               } else if (user.photoURL) {
-                  setPhotoURL(user.photoURL);
+               const storedProfilePictureUrl =
+                  data.profilePicture?.url || data.photoURL || user.photoURL;
+
+               if (storedProfilePictureUrl) {
+                  setPhotoURL(storedProfilePictureUrl);
                }
             } else {
                // If doc doesn't exist, create a basic one
@@ -101,11 +102,16 @@ const Profile = () => {
                   dob: "",
                   phoneNumber: "",
                   photoURL: user.photoURL || "",
+                  profilePicture: user.photoURL
+                     ? { url: user.photoURL, fileId: "", filePath: "" }
+                     : null,
+                  fileId: "",
+                  filePath: "",
                   providerId: user.providerData?.[0]?.providerId || "password",
                   createdAt: new Date().toISOString(),
                };
 
-               await setDoc(ref, base, {merge: true});
+               await setDoc(ref, base, { merge: true });
                setProfile(base);
                setForm({
                   displayName: base.displayName,
@@ -166,89 +172,69 @@ const Profile = () => {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      if (!file.type.startsWith("image/")) {
+         toast.error("Please select a valid image file.");
+         e.target.value = "";
+         return;
+      }
+
+      let uploadedFile = null;
+      const oldFileId = profile?.profilePicture?.fileId || profile?.fileId || null;
+
       try {
          setUploading(true);
 
          const uid = user.uid;
-         const displayName = profile?.displayName || user.displayName || "user";
-         const safeName = displayName.trim().replace(/\s+/g, "_");
+         uploadedFile = await uploadProfilePictureToImageKit(file, uid);
 
-         // 📌 1️⃣ Delete previous uploaded image if exists
-         if (profile?.photoURL) {
-            try {
-               // Extract the exact internal storage path
-               const oldPath = profile.photoURL.split(
-                  "/utilitypro_profile_picture/"
-               )[1];
+         const newPhotoURL = uploadedFile.url;
+         const fileId = uploadedFile.fileId;
+         const filePath = uploadedFile.filePath;
+         const payload = {
+            photoURL: newPhotoURL,
+            profilePicture: {
+               url: newPhotoURL,
+               fileId,
+               filePath,
+            },
+            fileId,
+            filePath,
+            updatedAt: new Date().toISOString(),
+         };
 
-               if (oldPath) {
-                  const {error: deleteError} = await supabase.storage
-                     .from("utilitypro_profile_picture")
-                     .remove([oldPath]);
-
-                  if (!deleteError) {
-                     toast.done("🗑️ Previous image deleted:", oldPath);
-                  } else {
-                     toast.warn(
-                        "⚠️ Failed to delete old file:",
-                        deleteError.message
-                     );
-                  }
-               }
-            } catch (deleteErr) {
-               console.warn("⚠️ Could not process delete:", deleteErr);
-            }
+         if (oldFileId && oldFileId !== fileId) {
+            await deleteImageKitFile(oldFileId);
          }
 
-         // 📌 2️⃣ Create new file path
-         const folderPath = `profile_picture/${safeName}_${uid}`;
-         const filePath = `${folderPath}/${Date.now()}_${file.name}`;
+         await setDoc(doc(fireDb, "user", uid), payload, { merge: true });
 
-         // 📌 3️⃣ Upload new file to Supabase
-         const {error: uploadError} = await supabase.storage
-            .from("utilitypro_profile_picture")
-            .upload(filePath, file);
-
-         if (uploadError) {
-            console.error(uploadError);
-            toast.warn("Upload failed, try again.");
-            return;
-         }
-
-         // 📌 4️⃣ Get public URL
-         const {data: urlData} = supabase.storage
-            .from("utilitypro_profile_picture")
-            .getPublicUrl(filePath);
-
-         const newPhotoURL = urlData?.publicUrl;
-
-         // 📌 5️⃣ Save new URL to Firestore
-         await setDoc(
-            doc(fireDb, "user", uid),
-            {photoURL: newPhotoURL, updatedAt: new Date().toISOString()},
-            {merge: true}
-         );
-
-         // 📌 6️⃣ Sync Firebase Authentication profile
          try {
-            await updateAuthProfile(user, {photoURL: newPhotoURL});
+            await updateAuthProfile(user, { photoURL: newPhotoURL });
          } catch (updateErr) {
             console.warn(
                "⚠️ Couldn't update Firebase Auth photo:",
-               updateErr.message
+               updateErr?.message || updateErr
             );
          }
 
-         // 📌 7️⃣ Update UI instantly (No refresh needed)
          setPhotoURL(newPhotoURL);
-         setProfile((prev) => ({...(prev || {}), photoURL: newPhotoURL}));
+         setProfile((prev) => ({ ...(prev || {}), ...payload }));
 
-         toast.done("New image uploaded successfully.");
+         toast.success("New image uploaded successfully.");
       } catch (err) {
-         toast.error("Upload error:");
+         if (uploadedFile?.fileId) {
+            try {
+               await deleteImageKitFile(uploadedFile.fileId);
+            } catch (cleanupErr) {
+               console.warn("⚠️ Failed to clean up newly uploaded ImageKit file:", cleanupErr);
+            }
+         }
+
+         console.error("ImageKit upload error:", err);
+         toast.error("Upload failed. Your previous image was kept.");
       } finally {
          setUploading(false);
-         e.target.value = ""; // reset input so same image can be selected again
+         e.target.value = "";
       }
    };
 
@@ -267,7 +253,7 @@ const Profile = () => {
          };
 
          // 1️⃣ Save to Firestore
-         await setDoc(doc(fireDb, "user", uid), payload, {merge: true});
+         await setDoc(doc(fireDb, "user", uid), payload, { merge: true });
 
          // 2️⃣ Update Firebase Auth displayName
          try {
@@ -281,7 +267,7 @@ const Profile = () => {
          }
 
          // 3️⃣ Update local state so UI changes instantly
-         setProfile((prev) => ({...(prev || {}), ...payload}));
+         setProfile((prev) => ({ ...(prev || {}), ...payload }));
          setEditMode(false);
       } catch (err) {
          console.error("Error updating profile:", err);
@@ -325,7 +311,7 @@ const Profile = () => {
 
                if (error.code === "auth/requires-recent-login") {
                   // ❗ Instead of logging them out, show your ConfirmLogin UI
-                  setModal({...modal, isOpen: false}); // close delete popup
+                  setModal({ ...modal, isOpen: false }); // close delete popup
                   setShowConfirmReAuth(true); // <-- triggers ConfirmLogin modal component
                   toast.info("Please verify your identity to continue.");
                } else {
@@ -346,10 +332,10 @@ const Profile = () => {
          {/* POPUP */}
          <Popup
             isOpen={modal.isOpen}
-            onClose={() => setModal({...modal, isOpen: false})}
+            onClose={() => setModal({ ...modal, isOpen: false })}
             onConfirm={() => {
                modal.action && modal.action();
-               setModal({...modal, isOpen: false});
+               setModal({ ...modal, isOpen: false });
             }}
             title={modal.title}
             message={modal.message}

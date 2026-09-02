@@ -56,6 +56,9 @@ UtilityPro/
 │   ├── App.jsx             # App routing
 │   ├── index.css           # Global styling
 │   └── main.jsx            # Application entry point
+├── worker/                 # Cloudflare Worker for ImageKit operations
+│   ├── src/index.js        # Authenticated ImageKit API and ownership checks
+│   └── wrangler.toml       # Worker configuration and public project variables
 ├── .env.example            # Example environment variables file
 ├── .firebaserc             # Firebase project configuration
 ├── .gitignore              # Git exclusions
@@ -102,8 +105,39 @@ The file should include variables such as:
 - `VITE_FIREBASE_MEASUREMENT_ID`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_IMAGEKIT_API_URL` - The deployed Cloudflare Worker URL
 
-Do not commit real credentials. Keep your local `.env` file private.
+Do not commit real credentials. Keep `.env`, Worker secret files such as
+`worker/.dev.vars`, private keys, certificates, service-account files, and
+the `secrets/` directory private. Only `.env.example` belongs in Git.
+
+### ImageKit Worker
+
+The Cloudflare Worker handles ImageKit authentication and deletion. Configure
+its secrets locally with Wrangler; do not put them in `wrangler.toml` or the
+repository:
+
+```bash
+cd worker
+npx wrangler secret put IMAGEKIT_PRIVATE_KEY
+npx wrangler secret put IMAGEKIT_PUBLIC_KEY
+```
+
+The Worker verifies the Firebase ID token, reads the authenticated user's
+Firestore document at `user/{uid}`, and permits deletion only when the
+requested ImageKit file ID matches `profilePicture.fileId` or the top-level
+`fileId`. Firestore REST responses use typed fields, so the Worker explicitly
+extracts `stringValue` from the nested `mapValue.fields` structure.
+
+When replacing a profile picture, the existing ImageKit file is deleted while
+its ID is still stored in Firestore. The new upload metadata is written only
+after that ownership check succeeds.
+
+Deploy the Worker from the `worker/` directory after configuring its secrets:
+
+```bash
+npx wrangler deploy
+```
 
 ### Run locally
 

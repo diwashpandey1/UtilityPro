@@ -25,8 +25,14 @@ const Login = () => {
       try {
          await loginWithEmail(email, password);
       } catch (err) {
-         // console.log(err);
-         toast.error("Login Failed ! Please try Again !")
+         const errorMessages = {
+            "auth/invalid-credential": "The email or password is incorrect.",
+            "auth/user-not-found": "No account exists for this email.",
+            "auth/wrong-password": "The email or password is incorrect.",
+            "auth/invalid-email": "Enter a valid email address.",
+            "auth/operation-not-allowed": "Email/password sign-in is not enabled for this Firebase project.",
+         };
+         toast.error(errorMessages[err.code] || err.message || "Login failed.");
       }
    };
 
