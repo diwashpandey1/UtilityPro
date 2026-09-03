@@ -287,7 +287,7 @@ const Profile = () => {
          message: "Are you sure you want to sign out of your account?",
          action: async () => {
             await logout();
-            navigate("/login");
+            navigate("/auth/login");
          },
       });
    };

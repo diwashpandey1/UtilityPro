@@ -1,243 +1,109 @@
-import React, { useState, useContext, useEffect } from "react";
-import { User, Mail, Lock, Eye } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { Lock, Mail, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore"; // 🔥 Import Firestore functions
-import { auth, fireDb } from "../backend/Firebase";
 import { toast } from "react-toastify";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { AuthContext } from "../context/AuthContext";
+import { auth, fireDb } from "../backend/Firebase";
+import AuthLayout, { AuthInput, AuthSubmitButton } from "../components/auth/AuthLayout";
 
-
-const SignUp = () => {
-  const { user, loginWithGoogle } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  // Form state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-  const [error, setError] = useState("");
-
-  // Redirect logged-in users
-  useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
-
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-
-    if (!fullName || !email || !password || !confirmPass) {
-      toast.warn("All fields are required.");
-      return;
-    }
-
-    if (password !== confirmPass) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-
-    try {
-      // 1. Create User in Firebase Authentication
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-
-      // 2. Update Auth Profile (Display Name)
-      await updateProfile(res.user, { displayName: fullName });
-
-      // 3. 🔥 Store User Data in Firestore "user" collection
-      // Route: user/{uid}
-      await setDoc(doc(fireDb, "user", res.user.uid), {
-        uid: res.user.uid,
-        displayName: fullName,
-        email: email,
-        // We initialize these as empty so your Profile page doesn't break
-        photoURL: "", 
-        dob: "", 
-        phoneNumber: "",
-        createdAt: new Date().toISOString(),
-        providerId: "password", // To identify login method in Profile page
-      });
-
-      // 4. Navigate to home
-      navigate("/", { replace: true });
-    } catch (err) {
-      // console.log(err);
-      toast.error(err.message);
-    }
-  };
-
-  return (
-    <div className="flex h-screen bg-white">
-
-      {/* LEFT SIDE */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600">
-        <div
-          className="absolute w-[180%] h-[180%] lg:w-[150%] lg:h-[150%] 
-                      top-1/2 right-0 transform -translate-y-1/2 translate-x-1/2 
-                      bg-white rounded-full opacity-100 z-10"
-          style={{ clipPath: "circle(50% at 50% 50%)" }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-l from-white to-transparent opacity-30"></div>
-        </div>
-
-        <div className="relative z-20 text-white text-center p-8 -translate-x-1/4">
-          <h1 className="text-5xl font-extrabold mb-2 tracking-tight">
-            SIGN UP
-          </h1>
-          <p className="text-xl opacity-80">CREATE ACCOUNT</p>
-          <div className="w-16 h-0.5 bg-white mx-auto mt-4"></div>
-        </div>
-      </div>
-
-      {/* RIGHT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative bg-white">
-
-        <Link
-          to="/"
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 12l2-2m0 0l7-7 7 7m-5 10V9m0 11v-4a1 1 0 011-1h2a1 1 0 
-                  011 1v4m0 0h-6"
-            />
-          </svg>
-        </Link>
-
-        <div className="w-full max-w-sm">
-
-          {/* HEADER */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
-              <svg className="w-8 h-8 text-white" viewBox="0 0 24 24">
-                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
-              </svg>
-            </div>
-            <h2 className="mt-5 text-xl font-semibold text-gray-800">
-              SIGN UP
-            </h2>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-100 text-red-600 p-2 rounded-md text-sm mb-3">
-              {error}
-            </div>
-          )}
-
-          {/* FORM */}
-          <form className="space-y-4" onSubmit={handleSignUp}>
-
-            <InputGroup
-              icon={User}
-              placeholder="Full Name"
-              type="text"
-              onChange={(e) => setFullName(e.target.value)}
-            />
-
-            <InputGroup
-              icon={Mail}
-              placeholder="Email"
-              type="email"
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <InputGroup
-              icon={Lock}
-              placeholder="Password"
-              type="password"
-              endIcon={Eye}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-
-            <InputGroup
-              icon={Lock}
-              placeholder="Confirm Password"
-              type="password"
-              endIcon={Eye}
-              onChange={(e) => setConfirmPass(e.target.value)}
-            />
-
-            {/* Sign Up Button */}
-            <button
-              type="submit"
-              className="w-full py-3 bg-blue-600 text-white font-semibold 
-                           rounded-lg shadow-md hover:bg-blue-700 transition"
-            >
-              Sign Up
-            </button>
-
-            {/* OR Divider */}
-            <div className="flex items-center my-4">
-              <div className="flex-grow border-t"></div>
-              <span className="mx-4 text-sm text-gray-400">Or Sign Up with</span>
-              <div className="flex-grow border-t"></div>
-            </div>
-
-            {/* GOOGLE BUTTON */}
-            <GoogleButton loginWithGoogle={loginWithGoogle} />
-          </form>
-
-          <div className="mt-8 text-center text-sm text-gray-500">
-            Already have an account?
-            <Link
-              to="/login"
-              className="text-blue-600 font-medium hover:underline ml-1"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+const errorMessages = {
+    "auth/email-already-in-use": "An account already exists for this email address.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/weak-password": "Choose a stronger password with at least 6 characters.",
+    "auth/operation-not-allowed": "Email and password sign-up is not enabled.",
+    "auth/network-request-failed": "Unable to connect. Please check your internet connection and try again.",
 };
 
-// INPUT COMPONENT
-const InputGroup = ({ icon: Icon, placeholder, type, endIcon: EndIcon, onChange }) => (
-  <div className="relative">
-    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-      <Icon size={18} />
-    </span>
+const getAuthErrorMessage = (error) => errorMessages[error.code] || "Unable to create your account. Please try again.";
 
-    <input
-      type={type}
-      placeholder={placeholder}
-      onChange={onChange}
-      className="w-full pl-10 pr-10 py-3 border-b border-gray-300 
-                  focus:outline-none focus:border-blue-500"
-    />
+const SignUp = () => {
+    const { user, loginWithGoogle } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPass, setConfirmPass] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    {EndIcon && (
-      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer">
-        <EndIcon size={18} />
-      </span>
-    )}
-  </div>
-);
+    useEffect(() => {
+        if (user) navigate("/", { replace: true });
+    }, [user, navigate]);
 
-// GOOGLE BUTTON
-const GoogleButton = ({ loginWithGoogle }) => (
-  <button
-    onClick={loginWithGoogle}
-    type="button"
-    className="w-full flex items-center justify-center gap-2 py-3 
-               border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-  >
-    <img
-      src="https://img.icons8.com/?size=28&id=17949&format=png"
-      alt="Google Icon"
-    />
-    <span className="text-sm">Continue with Google</span>
-  </button>
-);
+    const handleSignUp = async (event) => {
+        event.preventDefault();
+        if (!fullName.trim() || !email.trim() || !password || !confirmPass) {
+            toast.warn("Please complete all fields.");
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+            toast.error("Please enter a valid email address.");
+            return;
+        }
+        if (password.length < 6) {
+            toast.error("Choose a stronger password with at least 6 characters.");
+            return;
+        }
+        if (password !== confirmPass) {
+            toast.error("Passwords do not match.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+            await updateProfile(result.user, { displayName: fullName.trim() });
+            await setDoc(doc(fireDb, "user", result.user.uid), {
+                uid: result.user.uid,
+                displayName: fullName.trim(),
+                email: email.trim(),
+                photoURL: "",
+                dob: "",
+                phoneNumber: "",
+                createdAt: new Date().toISOString(),
+                providerId: "password",
+            });
+            toast.success("Account created successfully.");
+            navigate("/", { replace: true });
+        } catch (error) {
+            toast.error(getAuthErrorMessage(error));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleGoogleSignUp = async () => {
+        setIsSubmitting(true);
+        try {
+            await loginWithGoogle();
+        } catch (error) {
+            toast.error(getAuthErrorMessage(error));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <AuthLayout
+            eyebrow="Create your account"
+            title="Get started with UtilityPro"
+            description="Create an account to keep your useful tools close at hand."
+            footer={<>Already have an account? <Link to="/auth/login" className="font-semibold text-blue-600 hover:text-blue-700">Sign in</Link></>}
+        >
+            <form className="space-y-4" onSubmit={handleSignUp} noValidate>
+                <AuthInput icon={User} id="signup-name" label="Full name" type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} autoComplete="name" placeholder="Your full name" />
+                <AuthInput icon={Mail} id="signup-email" label="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" />
+                <AuthInput icon={Lock} id="signup-password" label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" placeholder="At least 6 characters" />
+                <AuthInput icon={Lock} id="signup-confirm-password" label="Confirm password" type="password" value={confirmPass} onChange={(event) => setConfirmPass(event.target.value)} autoComplete="new-password" placeholder="Repeat your password" />
+                <AuthSubmitButton loading={isSubmitting} loadingText="Creating account...">Create account</AuthSubmitButton>
+            </form>
+            <div className="my-6 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" />or continue with<span className="h-px flex-1 bg-slate-200" /></div>
+            <button type="button" onClick={handleGoogleSignUp} disabled={isSubmitting} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60">
+                <img src="https://img.icons8.com/?size=28&id=17949&format=png&color=000000" alt="" className="h-5 w-5" /> Continue with Google
+            </button>
+        </AuthLayout>
+    );
+};
 
 export default SignUp;

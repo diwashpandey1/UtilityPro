@@ -9,6 +9,7 @@ import PasswordGenerator from "./PasswordGenerator"
 import ColorPicker from "./ColorPicker"
 import QRCodeScanner from "./QRCodeScanner"
 import QrCodeGenerator from "./QrCodeGenerator";
+import NotFound from "../pages/NotFound";
 
 function Tool() {
    return (
@@ -30,6 +31,7 @@ function Tool() {
             <Route path="/color-picker" element={<ColorPicker />} />
             <Route path="/qr-code-generator" element={<QrCodeGenerator />} />
             <Route path="/qr-code-scanner" element={<QRCodeScanner />} />
+            <Route path="*" element={<NotFound />} />
          </Routes>
          <Footer />
       </section>

@@ -6,8 +6,10 @@ import Contact from "./pages/Contact";
 import SignUp from "./auth/Signup";
 import LogIn from "./auth/LogIn";
 import Profile from "./auth/Profile";
-import {Route, BrowserRouter as Router, Routes} from "react-router-dom";
-import {ToastContainer} from "react-toastify";
+import ForgetPassword from "./auth/ForgetPassword";
+import NotFound from "./pages/NotFound";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
@@ -20,9 +22,11 @@ function App() {
                <Route path="/tools/*" element={<Tool />} />
                <Route path="/about" element={<About />} />
                <Route path="/contact" element={<Contact />} />
-               <Route path="/signup" element={<SignUp />} />
-               <Route path="/login" element={<LogIn />} />
+               <Route path="/auth/signup" element={<SignUp />} />
+               <Route path="/auth/login" element={<LogIn />} />
+               <Route path="/auth/forgetpassword" element={<ForgetPassword />} />
                <Route path="/profile" element={<Profile />} />
+               <Route path="*" element={<NotFound />} />
             </Routes>
          </Router>
          {/* Global Toasts */}

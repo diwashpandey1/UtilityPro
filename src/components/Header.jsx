@@ -53,13 +53,13 @@ function Header() {
           {!user ? (
             <div className="hidden md:flex items-center gap-4">
               <Link
-                to="/login"
+                to="/auth/login"
                 className="text-gray-700 hover:text-blue-600 transition"
               >
                 Login
               </Link>
               <Link
-                to="/signup"
+                to="/auth/signup"
                 className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm"
               >
                 Sign Up
@@ -137,7 +137,7 @@ function Header() {
                 {!user ? (
                   <>
                     <Link
-                      to="/login"
+                      to="/auth/login"
                       onClick={() => setMobileMenuOpen(false)}
                       className="py-2 text-center border rounded-lg hover:text-blue-600"
                     >
@@ -145,7 +145,7 @@ function Header() {
                     </Link>
 
                     <Link
-                      to="/signup"
+                      to="/auth/signup"
                       onClick={() => setMobileMenuOpen(false)}
                       className="py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700"
                     >
